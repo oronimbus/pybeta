@@ -2,26 +2,29 @@
 
 References:
 -----------
-    Blitz, David, Laurens Swinkels, Kristina Ūsaitė, and Pim van Vliet. 'Shrinking Beta'. 
+    Blitz, David, Laurens Swinkels, Kristina Ūsaitė, and Pim van Vliet. 'Shrinking Beta'. \
         SSRN Scholarly Paper. Rochester, NY, 10 February 2022.
-    Blume, Marshall E. 'Betas and Their Regression Tendencies'. The Journal of Finance 30,
+    Blume, Marshall E. 'Betas and Their Regression Tendencies'. The Journal of Finance 30, \
         no. 3 (1975): 785-95.
-    Frazzini, Andrea, and Lasse Heje Pedersen. 'Betting against Beta'. Journal of Financial
+    Frazzini, Andrea, and Lasse Heje Pedersen. 'Betting against Beta'. Journal of Financial \
         Economics 111, no. 1 (1 January 2014): 1-25.
-    Hollstein, Fabian, Marcel Prokopczuk, and Chardin Wese Simen. 'Estimating Beta: Forecast
-        Adjustments and the Impact of Stock Characteristics for a Broad Cross-Section'.
+    Hollstein, Fabian, Marcel Prokopczuk, and Chardin Wese Simen. 'Estimating Beta: Forecast \
+        Adjustments and the Impact of Stock Characteristics for a Broad Cross-Section'. \
         SSRN Scholarly Paper. Rochester, NY, 17 August 2018.
-    Scholes, Myron, and Joseph Williams. 'Estimating Betas from Nonsynchronous Data'.
-        Journal of Financial Economics 5, no. 3 (1 December 1977): 309-27.
+    Scholes, Myron, and Joseph Williams. 'Estimating Betas from Nonsynchronous Data'. Journal \
+        of Financial Economics 5, no. 3 (1 December 1977): 309-27.
+    Stock, James H., and Mark W. Watson. 'Chapter 10 Forecasting with Many Predictors'. \
+        In Handbook of Economic Forecasting, edited by G. Elliott, C. W. J. Granger, and A. \
+        Timmermann, 1:515-54. Elsevier, 2006.
     Welch, Ivo. 'Simply Better Market Betas'. SSRN Scholarly Paper. Rochester, NY, 13 June 2021. 
-    Vasicek, Oldrich A. 'A Note on Using Cross-Sectional Information in Bayesian Estimation of
+    Vasicek, Oldrich A. 'A Note on Using Cross-Sectional Information in Bayesian Estimation of \
         Security Betas'. The Journal of Finance 28, no. 5 (December 1973): 1233-39.
 """
 from itertools import chain, combinations
 import numpy as np
 
 
-def add_intercept(data):
+def add_intercept(data: np.array) -> np.array:
     """Add column vector of ones to front of matrix."""
     return np.hstack([np.ones((data.shape[0], 1)), data])
 
@@ -139,10 +142,17 @@ class Beta:
         beta = corr_shrink * vol_shrink
         return beta
 
-    def scholes_williams(self) -> float:
-        """Calculate shrunk beta using Scholes & Williams (1977)."""
-        beta_lead = np.ravel(self._weighted_ols(self.exog_mat[1:, :], self.endog[:-1, :]))[-1]
-        beta_lag = np.ravel(self._weighted_ols(self.exog_mat[:-1, :], self.endog[1:, :]))[-1]
+    def scholes_williams(self, lag: int = 1) -> float:
+        """Calculate shrunk beta using Scholes & Williams (1977).
+
+        Args:
+            lag (float, optional): offset used to calculate lead/lag betas. Defaults to 1.
+
+        Returns:
+            float: Scholes Williams beta
+        """
+        beta_lead = np.ravel(self._weighted_ols(self.exog_mat[lag:, :], self.endog[:-lag, :]))[-1]
+        beta_lag = np.ravel(self._weighted_ols(self.exog_mat[:-lag, :], self.endog[lag:, :]))[-1]
         beta = np.ravel(self._weighted_ols(self.exog_mat, self.endog))[-1]
         auto_corr = np.corrcoef(self.exog[1:, :], self.exog[:-1, :], rowvar=False)[0, 1]
 
@@ -152,6 +162,7 @@ class Beta:
 
 class BetaForecastCombination:
     def __init__(self, exog: np.array, endog: np.array, window: int = 21):
+        """Initialise exogeneous (X) and endogeneous (y) data."""
         self.exog = np.atleast_2d(exog).T
         self.endog = np.atleast_2d(endog).T
         self.window = window
@@ -159,14 +170,24 @@ class BetaForecastCombination:
         self.weights = None
 
     def _generate_estimation_windows(self, data: np.array) -> list:
+        """Generate list of ``t+k`` expanding windows."""
         return [data[: self.window + i] for i in range(data.shape[0] - self.window)]
 
     def _train_test_split(self) -> None:
+        """Split data set into training and test periods given window cutoff."""
         cutoff = self.n_obs - self.window
         self.train_data = np.hstack([self.exog[:cutoff, :], self.endog[:cutoff, :]])
         self.test_data = np.hstack([self.exog[cutoff:, :], self.endog[cutoff:, :]])
 
     def _generate_betas(self, windows: list, **kwargs: dict) -> np.array:
+        """Generate betas from ``Beta`` class.
+
+        Args:
+            windows (list): list of data windows
+
+        Returns:
+            np.array: ``Nxk`` matrix of betas.
+        """
         # set up iterator
         beta_obj = [Beta(i[:, 0], i[:, 1]) for i in windows]
         c, v = kwargs.get("corr_target", 0.5), kwargs.get("vol_target", 2)
@@ -183,6 +204,11 @@ class BetaForecastCombination:
         return np.hstack([ols, adj_ols, vasicek, welch, aged_welch, robeco])
 
     def fit(self) -> float:
+        """Fit forecast combination model given window size.
+
+        Returns:
+            float: forecast combined beta.
+        """
         # split training data from test data for parameter estimation
         self._train_test_split()
 
@@ -201,16 +227,28 @@ class BetaForecastCombination:
 
 
 class BetaBMA(BetaForecastCombination):
-    def __init__(self, exog: np.array, endog: np.array, window: int = 21, shrinkage: float = None):
-        super().__init__(exog, endog)
-        self.shrinkage = shrinkage
+    def __init__(self, exog: np.array, endog: np.array, window: int = 21):
+        super().__init__(exog, endog, window)
 
-    def _generate_beta_combinations(self, data):
+    def _generate_beta_combinations(self, data: np.array) -> np.array:
+        """Combine ``k`` columns in all possible ways.
+
+        Args:
+            data (_type_): array with ``k`` columns
+
+        Returns:
+            np.array: array of possible combinations of column indices
+        """
         indices = list(range(data.shape[0]))
         combos = [np.array(list(combinations(indices, i))) for i in range(1, data.shape[0])]
         return np.array(list(chain(*combos)), dtype=object)
 
-    def fit(self):
+    def fit(self) -> float:
+        """Fit Bayesian Model Averaging over specified window.
+
+        Returns:
+            float: beta from Bayesian Model Averaging.
+        """
         # estimation windows for priors (train)
         self._train_test_split()
         training_windows = self._generate_estimation_windows(self.train_data)
