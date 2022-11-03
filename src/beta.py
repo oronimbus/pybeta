@@ -75,6 +75,29 @@ class Beta:
             return 0.67 * beta + 0.33
         return beta
 
+    def ewma(self, half_life: float = 0.33) -> float:
+        r"""Exponentially weighted moving average beta using WLS.
+
+        Beta is calculated using WLS and the following weights vector:
+        
+        .. math:: 
+        
+            w = \frac{exp(-|t-\tau|h)}{\sum_{\tau=1}^{t-1}exp(-|t-\tau|h)}
+
+        Where the half life is given by :math:`h=\frac{log(2)}{l}`.
+        
+        Args:
+            half_life (bool, optional): half life of EWMA period. Defaults to 0.33.
+
+        Returns:
+            float: beta
+        """
+        h = np.log(2) / (self.n_obs * half_life)
+        weights = np.exp(-np.arange(self.n_obs)[::-1] * h)
+        weights /= np.sum(weights)
+        beta = self._weighted_ols(self.exog_mat, self.endog, w=weights)
+        return np.ravel(beta)[1]
+
     def vasicek(self, beta_prior: float = 1, se_prior: float = 0.5) -> float:
         """Bayesian estimation of beta using Vasicek (1973).
 
