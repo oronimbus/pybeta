@@ -119,6 +119,18 @@ class Beta:
         den = 1 / np.square(se_prior) + 1 / np.square(std_error)
         return np.ravel(num / den)[0]
 
+    # TODO: see p9 in Holstein (2018)
+    def dimson(lags: int = 1) -> float:
+        """Dimson (1979) beta estimator for infrequently traded assets.
+
+        Args:
+            lags (int, optional): number of market lags included. Defaults to 2.
+
+        Returns:
+            float: Dimson beta
+        """
+        pass
+
     def welch(self, delta: float = 3, rho: float = 0) -> float:
         """Slope winsorized beta using Welch (2021).
 
