@@ -93,7 +93,7 @@ class Beta:
             float: beta
         """
         h = np.log(2) / (self.n_obs * half_life)
-        weights = np.exp(-np.arange(self.n_obs)[::-1] * h)
+        weights = np.exp(-np.abs(self.n_obs - np.arange(1, self.n_obs + 1)) * h)
         weights /= np.sum(weights)
         beta = self._weighted_ols(self.exog_mat, self.endog, w=weights)
         return np.ravel(beta)[1]
@@ -219,12 +219,13 @@ class BetaForecastCombination:
         ols = np.atleast_2d(list(map(lambda x: x.ols(), beta_obj))).T
         adj_ols = np.atleast_2d(list(map(lambda x: x.ols(True), beta_obj))).T
         vasicek = np.atleast_2d(list(map(lambda x: x.vasicek(), beta_obj))).T
+        ewma = np.atleast_2d(list(map(lambda x: x.ewma(), beta_obj))).T
         welch = np.atleast_2d(list(map(lambda x: x.welch(), beta_obj))).T
         aged_welch = np.atleast_2d(list(map(lambda x: x.welch(rho=2 / 256), beta_obj))).T
         robeco = np.atleast_2d(list(map(lambda x: x.robeco(c, v), beta_obj))).T
-        # schol_will = np.atleast_2d(list(map(lambda x: x.scholes_williams(), beta_obj))).T
+        schol_will = np.atleast_2d(list(map(lambda x: x.scholes_williams(), beta_obj))).T
 
-        return np.hstack([ols, adj_ols, vasicek, welch, aged_welch, robeco])
+        return np.hstack([ols, adj_ols, vasicek, ewma, welch, aged_welch, robeco, schol_will])
 
     def fit(self) -> float:
         """Fit forecast combination model given window size.
