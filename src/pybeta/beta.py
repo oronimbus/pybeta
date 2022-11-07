@@ -79,13 +79,13 @@ class Beta:
         r"""Exponentially weighted moving average beta using WLS.
 
         Beta is calculated using WLS and the following weights vector:
-        
-        .. math:: 
-        
+
+        .. math::
+
             w = \frac{exp(-|t-\tau|h)}{\sum_{\tau=1}^{t-1}exp(-|t-\tau|h)}
 
         Where the half life is given by :math:`h=\frac{log(2)}{l}`.
-        
+
         Args:
             half_life (bool, optional): half life of EWMA period. Defaults to 0.33.
 
@@ -119,8 +119,7 @@ class Beta:
         den = 1 / np.square(se_prior) + 1 / np.square(std_error)
         return np.ravel(num / den)[0]
 
-    # TODO: see p9 in Holstein (2018)
-    def dimson(lags: int = 1) -> float:
+    def dimson(self, lags: int = 2) -> float:
         """Dimson (1979) beta estimator for infrequently traded assets.
 
         Args:
@@ -129,7 +128,12 @@ class Beta:
         Returns:
             float: Dimson beta
         """
-        pass
+        X_trimmed, y_trimmed = self.exog[lags:], self.endog[lags:]
+        X_lagged = [self.exog[lags - i : -i] for i in range(1, lags + 1)]
+        X_mat = add_intercept(np.hstack([X_trimmed, *X_lagged]))
+        beta = np.ravel(self._weighted_ols(X_mat, y_trimmed))
+        idx = np.min([2, lags])
+        return np.sum(beta[1 : idx + 1])
 
     def welch(self, delta: float = 3, rho: float = 0) -> float:
         """Slope winsorized beta using Welch (2021).
@@ -232,12 +236,14 @@ class BetaForecastCombination:
         adj_ols = np.atleast_2d(list(map(lambda x: x.ols(True), beta_obj))).T
         vasicek = np.atleast_2d(list(map(lambda x: x.vasicek(), beta_obj))).T
         ewma = np.atleast_2d(list(map(lambda x: x.ewma(), beta_obj))).T
+        dimson = np.atleast_2d(list(map(lambda x: x.dimson(), beta_obj))).T
         welch = np.atleast_2d(list(map(lambda x: x.welch(), beta_obj))).T
         aged_welch = np.atleast_2d(list(map(lambda x: x.welch(rho=2 / 256), beta_obj))).T
         robeco = np.atleast_2d(list(map(lambda x: x.robeco(c, v), beta_obj))).T
         schol_will = np.atleast_2d(list(map(lambda x: x.scholes_williams(), beta_obj))).T
+        models = [ols, adj_ols, vasicek, ewma, dimson, welch, aged_welch, robeco, schol_will]
 
-        return np.hstack([ols, adj_ols, vasicek, ewma, welch, aged_welch, robeco, schol_will])
+        return np.hstack(models)
 
     def fit(self) -> float:
         """Fit forecast combination model given window size.
