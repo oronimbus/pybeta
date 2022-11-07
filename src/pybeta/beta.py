@@ -224,6 +224,7 @@ class BetaForecastCombination:
         self.train_data = np.hstack([self.exog[:cutoff, :], self.endog[:cutoff, :]])
         self.test_data = np.hstack([self.exog[cutoff:, :], self.endog[cutoff:, :]])
 
+    # TODO: allow kwargs to feed into beta estimation, also allow filter for methods
     def _generate_betas(self, windows: list, **kwargs: dict) -> np.array:
         """Generate betas from ``Beta`` class.
 
@@ -237,7 +238,7 @@ class BetaForecastCombination:
         beta_obj = [Beta(i[:, 0], i[:, 1]) for i in windows]
         c, v = kwargs.get("corr_target", 0.5), kwargs.get("vol_target", 2)
 
-        # consumer iterator and cast into 2d numpy array
+        # consume iterator and cast into 2d numpy array
         ols = np.atleast_2d(list(map(lambda x: x.ols(), beta_obj))).T
         adj_ols = np.atleast_2d(list(map(lambda x: x.ols(True), beta_obj))).T
         vasicek = np.atleast_2d(list(map(lambda x: x.vasicek(), beta_obj))).T
