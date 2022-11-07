@@ -28,6 +28,13 @@ python setup.py bdist_wheel && cd dist && pip install pybeta-0.1.0-py3-none-any.
 ```
 or just download and `pip install` the wheel directly from the righthand side.
 
+## Usage
+Usage is straight forward but please refer to the `notebooks/demo.ipynb` for an overview. The package can be imported and used as follows:
+```python
+from pybeta import Beta
+
+Beta(market_returns, asset_returns).ols()
+```
 
 ## References
 - Bates, J. M., and C. W. J. Granger. ‘The Combination of Forecasts’. OR 20, no. 4 (1969): 451–68. https://doi.org/10.2307/3008764.
