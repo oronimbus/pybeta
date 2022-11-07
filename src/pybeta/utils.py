@@ -2,7 +2,7 @@
 import pandas as pd
 
 
-def stack_dict_to_df(_dict: dict):
+def stack_dict_to_df(_dict: dict) -> pd.DataFrame:
     """Stack dict of dicts into dataframe."""
     stacked = []
     for k, v in _dict.items():
