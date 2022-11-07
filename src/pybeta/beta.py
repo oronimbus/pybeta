@@ -125,11 +125,11 @@ class Beta:
         den = 1 / np.square(se_prior) + 1 / np.square(std_error)
         return np.ravel(num / den)[0]
 
-    def dimson(self, lags: int = 2) -> float:
+    def dimson(self, lags: int = 1) -> float:
         """Dimson (1979) beta estimator for infrequently traded assets.
 
         Args:
-            lags (int, optional): number of market lags included. Defaults to 2.
+            lags (int, optional): number of market lags included. Defaults to 1.
 
         Returns:
             float: Dimson beta
@@ -137,9 +137,9 @@ class Beta:
         X_trimmed, y_trimmed = self.exog[lags:], self.endog[lags:]
         X_lagged = [self.exog[lags - i : -i] for i in range(1, lags + 1)]
         X_mat = add_intercept(np.hstack([X_trimmed, *X_lagged]))
-        beta = np.ravel(self._weighted_ols(X_mat, y_trimmed))
+        beta = np.ravel(self._weighted_ols(X_mat, y_trimmed))[1:]
         idx = np.min([2, lags])
-        return np.sum(beta[1 : idx + 1])
+        return np.sum(beta[: idx + 1])
 
     def welch(self, delta: float = 3, rho: float = 0) -> float:
         """Slope winsorized beta using Welch (2021).
