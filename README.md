@@ -8,7 +8,7 @@ So far included in this project are the following estimators:
 
 - [x] OLS (incl. Blume, 1975)
 - [x] Vasicek (1973)
-- [ ] Dimson (1979) 
+- [x] Dimson (1979) 
 - [x] EWMA (Hollstein, 2018)
 - [x] Welch (2021)
 - [x] Robeco (2022)
