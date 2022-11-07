@@ -1,4 +1,5 @@
-# Beta Shrinkage Methods
+# PyBeta
+## Beta Estimation and Shrinkage Methods
 
 This project gives alternative ways to look at beta for security analysis, strategy development and hedging purposes. Traditionally, beta in finance quantifies by how much an asset moves if its benchmark changes. The beta is therefore the non-diversifiable, systemic market risk and is formally given by $\beta_{i,t}=cov(r_{i,t},r_{m,t}) / \sigma^2_{m,t}$ for an asset $i$, benchmark $m$ at time $t$. It might be more intuitive to think of it as the correlation of stock $i$ to market $m$ returns multiplied by a volatility ratio: $\beta_{i_t}=\rho\times \frac{\sigma_{i,t}}{\sigma_{m,t}}$. This also establishes an explicit link between Pearson's correlation coefficient and the normal equation of the OLS estimator. Typically, the returns are expressed as *excess returns* (net of risk free return) which is being omitted here.
 
