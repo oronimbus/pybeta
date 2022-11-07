@@ -30,7 +30,13 @@ def add_intercept(data: np.array) -> np.array:
 
 
 class Beta:
-    def __init__(self, exog, endog):
+    def __init__(self, exog: np.array, endog: np.array):
+        """Initialise estimator class.
+
+        Args:
+            exog (np.array): benchmark or market return vector
+            endog (np.array): asset or stock return vector
+        """
         self.exog = np.atleast_2d(exog).T
         self.endog = np.atleast_2d(endog).T
         self.n_obs = exog.shape[0]
