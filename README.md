@@ -22,11 +22,10 @@ Do note that simply having a better estimator for security beta does *not* guara
 Finally, this is by no means a *study* of beta estimation but merely a demonstration of various implementations. I am using a single, arbitrarily chosen estimation horizon (1 month) across all examples. One ought to compare long term estimation (e.g. 3 years) as well as shorter, intraday horizons. 
 
 ## Installation
-To install you can either create your own dist and install it by running 
+The latest version is available from [PyPi](https://pypi.org/project/pybeta/0.1.0/) and can be easily installed by running:
 ```
-python setup.py bdist_wheel && cd dist && pip install pybeta-0.1.0-py3-none-any.whl
+pip install pybeta
 ```
-or just download and `pip install` the wheel directly from the righthand side.
 
 ## Usage
 Usage is straight forward but please refer to the `notebooks/demo.ipynb` for an overview. The package can be imported and used as follows:
